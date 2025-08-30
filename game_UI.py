@@ -2,7 +2,7 @@ from turtle import Turtle
 from collections import defaultdict
 
 COLORS = ["red", "orange", "yellow", "green", "blue"]
-FONT = ("Helvetica", 18, "normal")
+FONT = ("Helvetica", 16, "normal")
 
 class BlocksGen(Turtle):
 
@@ -43,3 +43,20 @@ class TextUIManager(Turtle):
             align='left',
             font=FONT
         )
+
+class Player(Turtle):
+
+    def __init__(self):
+        super().__init__()
+        self.penup()
+        self.shape("square")
+        self.resizemode("user")
+        self.shapesize(0.8, 6)
+        self.color("white")
+        self.setpos(0, -280)
+
+    def move_right(self):
+        self.forward(15)
+
+    def move_left(self):
+        self.backward(15)
