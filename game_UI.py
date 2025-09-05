@@ -4,7 +4,7 @@ from collections import defaultdict
 COLORS = ["red", "orange", "yellow", "green", "blue"]
 FONT = ("Helvetica", 16, "normal")
 
-class BlocksGen(Turtle):
+class GUI(Turtle):
 
     def __init__(self):
         super().__init__()
@@ -17,15 +17,28 @@ class BlocksGen(Turtle):
             self.create_blocks(color, start_x, y)
 
     def create_blocks(self, color, start_x, y):
-        if start_x > -300:
+        if start_x < 280:
             block = Turtle(shape="square")
             block.penup()
             block.resizemode("user")
-            block.shapesize(0.75, 3.5)
+            block.shapesize(0.75, 3.5, 0)
             block.color(color)
-            block.goto(start_x, y)
+            block.goto(start_x+40, y)
             self.blocks[color].append(block)
-            self.create_blocks(color, start_x-80, y)
+            self.create_blocks(color, start_x+80, y)
+
+    def draw_border(self, x1, y1, x2, y2):
+        self.hideturtle()
+        self.speed(0)
+        self.pensize(2)
+        self.pencolor('#787A91')
+        self.penup()
+        self.goto(x1, y1)
+        self.pendown()
+        self.goto(x2, y1)
+        self.goto(x2, y2)
+        self.goto(x1, y2)
+        self.goto(x1, y1)
 
 class TextUIManager(Turtle):
 
@@ -52,7 +65,7 @@ class Player(Turtle):
         self.shape("square")
         self.resizemode("user")
         self.shapesize(0.8, 6)
-        self.color("white")
+        self.color("#916BBF")
         self.setpos(0, -280)
 
     def move_right(self):
@@ -60,3 +73,33 @@ class Player(Turtle):
 
     def move_left(self):
         self.backward(15)
+
+class Ball(Turtle):
+
+    def __init__(self):
+        super().__init__()
+        self.shape("circle")
+        self.color("white")
+        self.penup()
+        self.setheading(45)
+        self.x_move = 10
+        self.y_move = 10
+        self.move_speed = 0.1
+
+    def move(self):
+        # since animation is off, we need it to move the ball in increments so movement's captured by screen update
+        new_x = self.xcor() + self.x_move
+        new_y = self.ycor() + self.y_move
+        self.goto(new_x, new_y)
+
+    def bounce_y(self):
+        self.y_move *= -1
+
+    def bounce_x(self):
+        self.x_move *= -1
+        self.move_speed *= 0.9
+
+    def reset_position(self):
+        self.goto(0, 0)
+        self.move_speed = 0.1
+        self.bounce_x()
