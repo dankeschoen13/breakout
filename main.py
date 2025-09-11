@@ -1,5 +1,5 @@
 from turtle import Turtle, Screen
-from game_UI import GUI, TextUIManager, Player, Ball
+from game_UI import GUI, TextUIManager, Paddle, Ball
 from game_logic import Logic
 from constants import Config
 
@@ -18,7 +18,7 @@ screen.tracer(0)
 gui = GUI()
 text = TextUIManager()
 ball = Ball()
-paddle = Player()
+paddle = Paddle()
 logic = Logic(gui.blocks, paddle, ball, text)
 
 screen.listen()
@@ -27,13 +27,13 @@ screen.onkeyrelease(logic.release_left, "Left")
 screen.onkeypress(logic.press_right, "Right")
 screen.onkeyrelease(logic.release_right, "Right")
 
-text.scoreboard(-270, 310)
+text.scoreboard(*Config.Game.SCORE_POS)
 gui.create_rows(
-    Config.Game.BLOCKS_COLORS, # create rows of blocks for each colors
-    start_x=-280,
-    start_y=280
+    Config.Blocks.COLORS, # create rows of blocks for each colors
+    start_x=-Config.Blocks.STARTING_POS,
+    start_y=Config.Blocks.STARTING_POS
 )
-gui.draw_border(*Config.Game.BORDER_DIMENSIONS)
+gui.draw_border(*Config.Game.BORDER_DIM)
 
 # def check_ball_collision(_ball: Ball, _blocks):
 #     for color, block_list in _blocks.items():
@@ -88,7 +88,7 @@ def game_loop():
     screen.update()
 
     # Schedule next frame
-    screen.ontimer(game_loop, int(ball.move_speed * 1000))
+    screen.ontimer(game_loop, int(1000 / Config.Screen.FPS))
 
 game_loop()
 screen.mainloop()

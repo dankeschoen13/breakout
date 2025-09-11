@@ -1,12 +1,5 @@
-from constants import Settings
 import math
-
-BOUNDARY = 215
-BALL_SPEED = 5
-PADDLE_SPEED = 8
-PADDLE_HALF = 60
-MAX_OFFSET_PERCENTAGE = 0.9
-PADDLE_DIR_INFLUENCE = 0.2 # of ball speed
+from constants import Config
 
 class Logic:
 
@@ -22,7 +15,7 @@ class Logic:
         # Movement flags
         self.is_moving_left = False
         self.is_moving_right = False
-        self.speed_val = PADDLE_SPEED
+        self.paddle_step = Config.Paddle.SPEED
 
     # Key press trackers
     def press_left(self):
@@ -43,64 +36,68 @@ class Logic:
         moved = False
 
         if (self.is_moving_left
-                and self.paddle.xcor() > -BOUNDARY):
-            self.paddle.setx(self.paddle.xcor() - self.speed_val)
+                and self.paddle.xcor() > -Config.Game.X_BOUNDARY):
+            self.paddle.setx(self.paddle.xcor() - self.paddle_step)
             moved = True
 
         if (self.is_moving_right
-                and self.paddle.xcor() < BOUNDARY):
-            self.paddle.setx(self.paddle.xcor() + self.speed_val)
+                and self.paddle.xcor() < Config.Game.X_BOUNDARY):
+            self.paddle.setx(self.paddle.xcor() + self.paddle_step)
             moved = True
 
         if moved and not self.ball.in_play:
             self.launch_ball()
 
     def get_ball_start_y(self):
-        ball_height = 20 * self.ball.shapesize()[0]
-        paddle_height = 20 * self.paddle.shapesize()[0]
-        paddle_top = self.paddle.ycor() + (paddle_height / 2)
-        return paddle_top + (ball_height / 2)
+        paddle_top = self.paddle.ycor() + Config.Paddle.half_height()
+        return paddle_top + Config.Ball.half_height()
 
     def launch_ball(self):
         if self.ball.in_play:
             return  # Already launched
 
         self.ball.in_play = True
+        paddle_half = Config.Paddle.half_width()
+        speed = Config.Ball.SPEED
 
-        speed = BALL_SPEED
-        max_offset = PADDLE_HALF * MAX_OFFSET_PERCENTAGE
-        offset = self.ball.xcor() - self.paddle.xcor()
-        offset = max(-max_offset, min(offset, max_offset))
-
-        self.ball.x_move = (offset / PADDLE_HALF) * speed
+        ratio = (self.ball.xcor() - self.paddle.xcor()) / paddle_half
 
         if self.is_moving_right:
-            self.ball.x_move += 1
+            ratio += Config.Physics.PADDLE_PUSH
         elif self.is_moving_left:
-            self.ball.x_move -= 1
+            ratio -= Config.Physics.PADDLE_PUSH
+
+        ratio = max(-Config.Physics.MAX_RATIO,
+                    min(ratio, Config.Physics.MAX_RATIO))
+
+        self.ball.x_move = ratio * speed
 
         self.ball.y_move = math.sqrt(max(speed ** 2 - self.ball.x_move ** 2, 0))
 
     def check_paddle_collision(self):
+        paddle_half = Config.Paddle.half_width()
         if (self.paddle.ycor() < self.ball.ycor() < self.get_ball_start_y()
-                and self.paddle.xcor() - PADDLE_HALF < self.ball.xcor() < self.paddle.xcor() + PADDLE_HALF
+                and self.paddle.xcor() - paddle_half < self.ball.xcor() < self.paddle.xcor() + paddle_half
                 and self.ball.y_move < 0):
             self.ball.bounce_y()
 
             speed = math.hypot(self.ball.x_move, self.ball.y_move)
 
-            max_offset = PADDLE_HALF * MAX_OFFSET_PERCENTAGE
-            offset = self.ball.xcor() - self.paddle.xcor()
-            offset = max(-max_offset, min(offset, max_offset))
-            self.ball.x_move = offset / PADDLE_HALF * speed
+            ratio = (self.ball.xcor() - self.paddle.xcor()) / paddle_half
 
-            influence = PADDLE_DIR_INFLUENCE * speed
             if self.is_moving_right:
-                self.ball.x_move += influence
+                ratio += Config.Physics.PADDLE_PUSH
             elif self.is_moving_left:
-                self.ball.x_move -= influence
+                ratio -= Config.Physics.PADDLE_PUSH
+
+            ratio = max(-Config.Physics.MAX_RATIO,
+                        min(ratio, Config.Physics.MAX_RATIO))
+
+            self.ball.x_move = ratio * speed
 
             self.ball.y_move = math.copysign(
                 math.sqrt(max(speed ** 2 - self.ball.x_move ** 2, 0)),
                 self.ball.y_move
             )
+        elif self.ball.ycor() < Config.Game.BORDER_DIM[1] + Config.Ball.half_height():
+            self.ball.reset_position(self.paddle.xcor(), self.get_ball_start_y())

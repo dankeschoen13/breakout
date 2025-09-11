@@ -9,71 +9,78 @@ class Screen:
     FPS: int = 60
 
 @dataclass(frozen=True)
+class Game:
+    REG_FONT: tuple[str, int, str] = ("Helvetica", 16, "normal")
+    REG_FONT_COL: str = "white"
+    SCORE_POS: tuple = (-270, 310)
+    SCORE_TXT: str = "SCORE: "
+    LIVES: int = 3
+    X_BOUNDARY: int = 215
+    BORDER_DIM: tuple = (-280, -325, 280, 293)
+    BORDER_COL: str = "#787A91"
+    BORDER_THICKNESS: int = 2
+
+@dataclass(frozen=True)
+class Blocks:
+    CELL_WIDTH: int = 80
+    COLORS: tuple[str, ...] = ("red", "orange", "yellow", "green", "blue")
+    SHAPESIZE: tuple = (0.75, 3.50, 0)
+    STARTING_POS: int = 280
+    ROW_SPACING: int = 25
+
+@dataclass(frozen=True)
 class Paddle:
     SPEED: int = 8
-    SHAPESIZE: tuple = (0.75, 6) # (stretch_wid, stretch_len) scale factor of 20
-    POS: int = -280
+    SHAPESIZE: tuple = (0.60, 6) # (stretch_wid, stretch_len) scale factor of 20
+    BASESIZE: int = 20
+    STARTING_POS: int = -280
     COLOR: str = "#916BBF"
-    HALF_WIDTH: int = 50   # half-width in px
-    HEIGHT: int = 20       # used for hitbox math
+
+    @classmethod
+    def width(cls) -> float:
+        return cls.SHAPESIZE[1] * cls.BASESIZE
+
+    @classmethod
+    def half_width(cls) -> float:
+        return cls.width() / 2
+
+    @classmethod
+    def height(cls) -> float:
+        return cls.SHAPESIZE[0] * cls.BASESIZE
+
+    @classmethod
+    def half_height(cls) -> float:
+        return cls.height() / 2
 
 @dataclass(frozen=True)
 class Ball:
-    SHAPESIZE: tuple = (0.80, 0.80) # (stretch_wid, stretch_len) scale factor of 20
-    SPEED: int = 5
-    SIZE: int = 20  # base size of a turtle circle (scales with shapesize)
     COLOR: str = "white"
+    SHAPESIZE: tuple = (0.80, 0.80) # (stretch_wid, stretch_len) scale factor of 20
+    BASESIZE: int = 20
+    SPEED: int = 5
+
+    @classmethod
+    def width(cls) -> float:
+        return cls.SHAPESIZE[1] * cls.BASESIZE
+
+    @classmethod
+    def height(cls) -> float:
+        return cls.SHAPESIZE[0] * cls.BASESIZE
+
+    @classmethod
+    def half_height(cls) -> float:
+        return cls.height() / 2
 
 @dataclass(frozen=True)
 class Physics:
-    MAX_OFFSET_PERCENTAGE: float = 0.8
-    PADDLE_DIR_INFLUENCE: float = 0.15
-
-@dataclass(frozen=True)
-class Game:
-    LIVES: int = 3
-    BLOCKS_COLORS: tuple[str, ...] = "red", "orange", "yellow", "green", "blue"
-    X_BOUNDARY: int = 215
-    BORDER_DIMENSIONS: tuple = (-280, -325, 280, 293)
+    MAX_RATIO: float = 0.95
+    PADDLE_PUSH: float = 0.25
 
 @dataclass(frozen=True)
 class Config:
     Screen: Screen = Screen()
+    Game: Game = Game()
+    Blocks: Blocks = Blocks()
     Paddle: Paddle = Paddle()
     Ball: Ball = Ball()
     Physics: Physics = Physics()
-    Game: Game = Game()
-
-class Settings:
-    # Screen
-    SCREEN_WIDTH = 600
-    SCREEN_HEIGHT = 800
-    SCREEN_BG_COLOR = "black"
-    SCREEN_TITLE = "Breakout"
-
-    #Game Area
-    BOUNDARY = 215
-
-    # Paddle
-    PADDLE_SPEED = 8
-    PADDLE_SHAPESIZE_W = 6 # scale factor of 20
-    PADDLE_SHAPESIZE_H = 0.75 # scale factor of 20
-    PADDLE_Y_POS = -280
-    PADDLE_COLOR = "#916BBF"
-    # PADDLE_HALF = 50   # half-width of paddle in px
-    # PADDLE_HEIGHT = 20 # actual height (for hitbox math)
-
-    # Ball
-    BALL_SHAPESIZE_W = 0.80 # scale factor of 20
-    BALL_SHAPESIZE_H = 0.80 # scale factor of 20
-    BALL_SPEED = 5
-    BALL_SIZE = 20  # base size of a turtle circle (scales with shapesize)
-    BALL_COLOR = "white"
-
-    # Physics
-    MAX_OFFSET_PERCENTAGE = 0.8
-    PADDLE_DIR_INFLUENCE = 0.15
-
-    # Game
-    LIVES = 3
-    FPS = 60
