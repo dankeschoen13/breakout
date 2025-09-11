@@ -1,5 +1,6 @@
 from turtle import Turtle
 from collections import defaultdict
+from constants import Settings
 
 COLORS = ["red", "orange", "yellow", "green", "blue"]
 FONT = ("Helvetica", 16, "normal")
@@ -64,42 +65,48 @@ class Player(Turtle):
         self.penup()
         self.shape("square")
         self.resizemode("user")
-        self.shapesize(0.8, 6)
+        self.shapesize(
+            Settings.PADDLE_SHAPESIZE_H,
+            Settings.PADDLE_SHAPESIZE_W
+        )
         self.color("#916BBF")
-        self.setpos(0, -280)
-
-    def move_right(self):
-        self.forward(15)
-
-    def move_left(self):
-        self.backward(15)
+        self.setpos(0, Settings.PADDLE_Y_POS)
 
 class Ball(Turtle):
 
     def __init__(self):
         super().__init__()
-        self.shape("circle")
-        self.color("white")
         self.penup()
-        self.setheading(45)
-        self.x_move = 10
-        self.y_move = 10
-        self.move_speed = 0.1
+        self.shape("circle")
+        self.resizemode("user")
+        self.shapesize(
+            Settings.BALL_SHAPESIZE_H,
+            Settings.BALL_SHAPESIZE_W
+        )
+        self.color("white")
+
+        self.x_move = 0
+        self.y_move = 0
+        self.move_speed = 0.05
+        self.in_play = False
+
+    def set_velocity(self, x, y):
+        self.x_move = x
+        self.y_move = y
 
     def move(self):
-        # since animation is off, we need it to move the ball in increments so movement's captured by screen update
         new_x = self.xcor() + self.x_move
         new_y = self.ycor() + self.y_move
         self.goto(new_x, new_y)
 
+    def bounce_x(self):
+        self.x_move *= -1
+
     def bounce_y(self):
         self.y_move *= -1
 
-    def bounce_x(self):
-        self.x_move *= -1
-        self.move_speed *= 0.9
-
-    def reset_position(self):
-        self.goto(0, 0)
-        self.move_speed = 0.1
-        self.bounce_x()
+    def reset_position(self, x, y):
+        self.goto(x, y)
+        self.x_move = 0
+        self.y_move = 0
+        self.in_play = False
