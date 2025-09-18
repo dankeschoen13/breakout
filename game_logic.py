@@ -136,23 +136,87 @@ class Logic:
         ball = self.ball
         r = Config.Ball.radius()
 
-        for color, block_list in list(self.blocks.items()):
-            for block in block_list[:]:
-                if (abs(ball.xcor() - block.xcor()) < Config.Blocks.half_width() + r and
-                        abs(ball.ycor() - block.ycor()) < Config.Blocks.half_height() + r):
+        ball_start_pos = (ball.xcor(), ball.ycor())
+        ball_velocity = (ball.x_move, ball.y_move)
 
-                    dx = ball.xcor() - block.xcor()
-                    dy = ball.ycor() - block.ycor()
+        if ball_velocity[0] == 0 and ball_velocity[1] == 0:
+            return None
 
-                    if abs(dx / Config.Blocks.width()) > abs(dy / Config.Blocks.height()):
-                        self.ball.bounce_x()
+        first_collision = {
+            "time": 1.0,
+            "block": None,
+            "normal": (0.0, 0.0)
+        }
+
+        for color, block_list in self.blocks.items():
+            for block in block_list:
+
+                west_side = block.xcor() - Config.Blocks.half_width() - r
+                south_side = block.ycor() - Config.Blocks.half_height() - r
+                east_side = block.xcor() + Config.Blocks.half_width() + r
+                north_side = block.ycor() + Config.Blocks.half_height() + r
+
+                if ball_velocity[0] == 0:
+                    shortest_time_to_x_hit, longest_time_to_x_hit = -math.inf, math.inf
+                else:
+                    time_to_hit_west = (west_side - ball_start_pos[0]) / ball_velocity[0]
+                    time_to_hit_east = (east_side - ball_start_pos[0]) / ball_velocity[0]
+
+                    shortest_time_to_x_hit = min(time_to_hit_west, time_to_hit_east)
+                    longest_time_to_x_hit = max(time_to_hit_west, time_to_hit_east)
+
+                if ball_velocity[1] == 0:
+                    shortest_time_to_y_hit, longest_time_to_y_hit = -math.inf, math.inf
+                else:
+                    time_to_hit_south = (south_side - ball_start_pos[1]) / ball_velocity[1]
+                    time_to_hit_north = (north_side - ball_start_pos[1]) / ball_velocity[1]
+
+                    shortest_time_to_y_hit = min(time_to_hit_south, time_to_hit_north)
+                    longest_time_to_y_hit = max(time_to_hit_south, time_to_hit_north)
+
+                # A collision occurs only if the time intervals
+                # [shortest_time_to_x_hit, longest_time_to_x_hit]
+                # and
+                # [shortest_time_to_y_hit, longest_time_to_y_hit]
+                # overlap
+                t_hit_near = max(shortest_time_to_x_hit, shortest_time_to_y_hit)
+                t_hit_far = min(longest_time_to_x_hit, longest_time_to_y_hit)
+
+                # Conditions for a valid collision:
+                # 1. The intervals must overlap (t_hit_near < t_hit_far)
+                # 2. The collision must happen in the future (t_hit_near > 0)
+                # 3. The collision must happen within this frame (t_hit_near < 1.0)
+                # 4. It must be earlier than any other collision we've found so far
+                if t_hit_near < t_hit_far and 0 < t_hit_near < first_collision["time"]:
+                    first_collision["time"] = t_hit_near
+                    first_collision["block"] = block
+                    first_collision["color"] = color
+
+                    if shortest_time_to_x_hit > shortest_time_to_y_hit:
+                        first_collision["normal"] = (-math.copysign(1, ball_velocity[0]), 0)  # Hit a side wall
                     else:
-                        self.ball.bounce_y()
+                        first_collision["normal"] = (0, -math.copysign(1, ball_velocity[1]))  # Hit top/bottom
 
-                    block.hideturtle()
-                    self.blocks[color].remove(block)
+        if first_collision["block"] is not None:
+            time = first_collision["time"]
+            ball.setx(ball_start_pos[0] + ball_velocity[0] * time)
+            ball.sety(ball_start_pos[1] + ball_velocity[1] * time)
 
-                    return
+            dot_product = ball.x_move * first_collision["normal"][0] + ball.y_move * first_collision["normal"][1]
+            ball.x_move -= 2 * dot_product * first_collision["normal"][0]
+            ball.y_move -= 2 * dot_product * first_collision["normal"][1]
+
+            remaining_time = 1.0 - time
+            ball.setx(ball.xcor() + ball.x_move * remaining_time)
+            ball.sety(ball.ycor() + ball.y_move * remaining_time)
+
+            block_to_remove = first_collision["block"]
+            block_to_remove.hideturtle() # type: ignore
+            self.blocks[first_collision["color"]].remove(block_to_remove)
+
+            return True  # Indicate that a collision and move happened
+
+        return False  # Indicate no collision happened
 
 
 

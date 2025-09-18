@@ -36,7 +36,11 @@ gui.draw_border(*Config.Game.BORDER_DIM)
 def game_loop():
     logic.paddle_move()
     if logic.game_started:
-        ball.move()
+        collision_happened = logic.check_blocks_collision()
+
+        if not collision_happened:
+            ball.move()
+
         # Bounce on walls
         if abs(ball.xcor()) > 265:
             ball.bounce_x()
