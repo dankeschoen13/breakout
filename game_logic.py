@@ -133,6 +133,7 @@ class Logic:
             )
 
     def check_blocks_collision(self):
+
         ball = self.ball
         r = Config.Ball.radius()
 
@@ -156,43 +157,43 @@ class Logic:
                 east_side = block.xcor() + Config.Blocks.half_width() + r
                 north_side = block.ycor() + Config.Blocks.half_height() + r
 
+                # Legend:
+                # stx = the shortest time to hit an x side of the block (up or down/north or south)
+                # ltx = the longest time to hit an x side of the block
+                # sty = the shortest time to hit a y side of the block (left or right/west or east)
+                # lty = the longest time to hit a y side of the block
                 if ball_velocity[0] == 0:
-                    shortest_time_to_x_hit, longest_time_to_x_hit = -math.inf, math.inf
+                    stx, ltx = -math.inf, math.inf
                 else:
                     time_to_hit_west = (west_side - ball_start_pos[0]) / ball_velocity[0]
                     time_to_hit_east = (east_side - ball_start_pos[0]) / ball_velocity[0]
 
-                    shortest_time_to_x_hit = min(time_to_hit_west, time_to_hit_east)
-                    longest_time_to_x_hit = max(time_to_hit_west, time_to_hit_east)
+                    stx = min(time_to_hit_west, time_to_hit_east)
+                    ltx = max(time_to_hit_west, time_to_hit_east)
 
                 if ball_velocity[1] == 0:
-                    shortest_time_to_y_hit, longest_time_to_y_hit = -math.inf, math.inf
+                    sty, lty = -math.inf, math.inf
                 else:
                     time_to_hit_south = (south_side - ball_start_pos[1]) / ball_velocity[1]
                     time_to_hit_north = (north_side - ball_start_pos[1]) / ball_velocity[1]
 
-                    shortest_time_to_y_hit = min(time_to_hit_south, time_to_hit_north)
-                    longest_time_to_y_hit = max(time_to_hit_south, time_to_hit_north)
+                    sty = min(time_to_hit_south, time_to_hit_north)
+                    lty = max(time_to_hit_south, time_to_hit_north)
 
-                # A collision occurs only if the time intervals
-                # [shortest_time_to_x_hit, longest_time_to_x_hit]
-                # and
-                # [shortest_time_to_y_hit, longest_time_to_y_hit]
-                # overlap
-                t_hit_near = max(shortest_time_to_x_hit, shortest_time_to_y_hit)
-                t_hit_far = min(longest_time_to_x_hit, longest_time_to_y_hit)
+                t_hit = max(stx, sty)
+                t_exit = min(ltx, lty)
 
                 # Conditions for a valid collision:
-                # 1. The intervals must overlap (t_hit_near < t_hit_far)
-                # 2. The collision must happen in the future (t_hit_near > 0)
-                # 3. The collision must happen within this frame (t_hit_near < 1.0)
+                # 1. The intervals must overlap (t_hit < t_exit)
+                # 2. The collision must happen in the future (t_hit > 0)
+                # 3. The collision must happen within this frame (t_hit < 1.0)
                 # 4. It must be earlier than any other collision we've found so far
-                if t_hit_near < t_hit_far and 0 < t_hit_near < first_collision["time"]:
-                    first_collision["time"] = t_hit_near
+                if t_hit < t_exit and 0 < t_hit < first_collision["time"]:
+                    first_collision["time"] = t_hit
                     first_collision["block"] = block
                     first_collision["color"] = color
 
-                    if shortest_time_to_x_hit > shortest_time_to_y_hit:
+                    if stx > sty: # if it takes longer to hit x-slab than the y-slab
                         first_collision["normal"] = (-math.copysign(1, ball_velocity[0]), 0)  # Hit a side wall
                     else:
                         first_collision["normal"] = (0, -math.copysign(1, ball_velocity[1]))  # Hit top/bottom
