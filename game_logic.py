@@ -1,5 +1,16 @@
 import math
 from constants import Config, Rules
+from typing import TypedDict, Optional
+import turtle
+
+class Collision(TypedDict):
+    """
+    Type Helper to prevent IDE warnings
+    """
+    time: float
+    block: Optional[turtle.Turtle]
+    color: Optional[str]
+    type: Optional[str]
 
 class Logic:
 
@@ -143,10 +154,11 @@ class Logic:
         if ball_velocity[0] == 0 and ball_velocity[1] == 0:
             return None
 
-        first_collision = {
+        first_collision: Collision = {
             "time": 1.0,
             "block": None,
-            "normal": (0.0, 0.0)
+            "color": None,
+            "type": None  # We'll store "x" or "y" here instead of a normal vector
         }
 
         for color, block_list in self.blocks.items():
@@ -194,25 +206,26 @@ class Logic:
                     first_collision["color"] = color
 
                     if stx > sty: # if it takes longer to hit x-slab than the y-slab
-                        first_collision["normal"] = (-math.copysign(1, ball_velocity[0]), 0)  # Hit a side wall
+                        first_collision["type"] = "x"  # Hit a side wall
                     else:
-                        first_collision["normal"] = (0, -math.copysign(1, ball_velocity[1]))  # Hit top/bottom
+                        first_collision["type"] = "y"  # Hit top/bottom
 
         if first_collision["block"] is not None:
             time = first_collision["time"]
             ball.setx(ball_start_pos[0] + ball_velocity[0] * time)
             ball.sety(ball_start_pos[1] + ball_velocity[1] * time)
 
-            dot_product = ball.x_move * first_collision["normal"][0] + ball.y_move * first_collision["normal"][1]
-            ball.x_move -= 2 * dot_product * first_collision["normal"][0]
-            ball.y_move -= 2 * dot_product * first_collision["normal"][1]
+            if first_collision["type"] == "x":
+                ball.bounce_x()
+            else:
+                ball.bounce_y()
 
             remaining_time = 1.0 - time
             ball.setx(ball.xcor() + ball.x_move * remaining_time)
             ball.sety(ball.ycor() + ball.y_move * remaining_time)
 
             block_to_remove = first_collision["block"]
-            block_to_remove.hideturtle() # type: ignore
+            block_to_remove.hideturtle()
             self.blocks[first_collision["color"]].remove(block_to_remove)
 
             return True  # Indicate that a collision and move happened
